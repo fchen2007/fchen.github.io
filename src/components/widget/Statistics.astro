@@ -1,0 +1,82 @@
+---
+import WidgetLayout from "./WidgetLayout.astro";
+
+interface Props {
+	class?: string;
+	style?: string;
+}
+
+const { style } = Astro.props;
+const className = Astro.props.class ?? "";
+---
+
+<WidgetLayout id="statistics" name="统计" class={`pb-2 ${className}`} style={style}>
+	<div class="px-1 pb-3 pt-1">
+		<div class="text-center">
+			<div class="text-4xl font-extrabold tracking-tight text-neutral-900 dark:text-neutral-100">
+				<span id="vercount_value_page_pv">--</span>
+			</div>
+			<div class="mt-1 text-sm text-neutral-400">总浏览量</div>
+		</div>
+
+		<div class="mt-5 grid grid-cols-[1fr_1px_1fr] items-center gap-3 pb-2">
+			<div class="text-center">
+				<div class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+					<span id="vercount_value_site_pv">--</span>
+				</div>
+				<div class="mt-1 text-sm text-neutral-400">访问数</div>
+			</div>
+
+			<div class="h-12 bg-black/10 dark:bg-white/10"></div>
+
+			<div class="text-center">
+				<div class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+					<span id="vercount_value_site_uv">--</span>
+				</div>
+				<div class="mt-1 text-sm text-neutral-400">游客数</div>
+			</div>
+		</div>
+	</div>
+</WidgetLayout>
+
+<script>
+	const ids = [
+		"vercount_value_page_pv",
+		"vercount_value_site_pv",
+		"vercount_value_site_uv",
+	];
+
+	function compactNumber(element: HTMLElement) {
+		if (element.dataset.formatted === "true") return;
+
+		const value = Number(element.textContent?.replace(/,/g, ""));
+		if (!Number.isFinite(value) || value < 1000) return;
+
+		element.textContent = new Intl.NumberFormat("en-US", {
+			notation: "compact",
+			maximumFractionDigits: 1,
+		})
+			.format(value)
+			.replace(/\s/g, "");
+
+		element.dataset.formatted = "true";
+	}
+
+	const observer = new MutationObserver(() => {
+		for (const id of ids) {
+			const element = document.getElementById(id);
+			if (element) compactNumber(element);
+		}
+	});
+
+	for (const id of ids) {
+		const element = document.getElementById(id);
+		if (element) {
+			observer.observe(element, {
+				childList: true,
+				characterData: true,
+				subtree: true,
+			});
+		}
+	}
+</script>
