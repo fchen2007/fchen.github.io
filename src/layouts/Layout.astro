@@ -4,6 +4,7 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 
 import ConfigCarrier from "@components/ConfigCarrier.astro";
+import QuadCursor from "@components/misc/QuadCursor.astro";
 import { profileConfig, siteConfig } from "@/config";
 import {
 	AUTO_MODE,
@@ -151,14 +152,21 @@ const bannerOffset =
 	<body class=" min-h-screen transition " class:list={[{"lg:is-home": isHomePage, "enable-banner": enableBanner}]}
 		  data-overlayscrollbars-initialize
 	>
+		<QuadCursor />
 		<ConfigCarrier></ConfigCarrier>
 		<slot />
 
 		<!-- increase the page height during page transition to prevent the scrolling animation from jumping -->
 		<div id="page-height-extend" class="hidden h-[300vh]"></div>
 	
-	    <script is:inline src="/js/cloud-sea.js"></script>
 			<script is:inline defer src="https://events.vercount.one/js"></script>
+		<script is:inline id="banner-video-reduced-motion">
+			const bannerVideo = document.getElementById("banner-video");
+			if (bannerVideo && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+				bannerVideo.removeAttribute("autoplay");
+				bannerVideo.pause();
+			}
+		</script>
 </body>
 </html>
 

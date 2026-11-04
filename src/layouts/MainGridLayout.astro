@@ -1,11 +1,11 @@
 ---
 import BackToTop from "@components/control/BackToTop.astro";
 import Footer from "@components/Footer.astro";
+import HomeTypewriter from "@components/misc/HomeTypewriter.astro";
 import Navbar from "@components/Navbar.astro";
 import SideBar from "@components/widget/SideBar.astro";
 import type { MarkdownHeading } from "astro";
 import { Icon } from "astro-icon/components";
-import ImageWrapper from "../components/misc/ImageWrapper.astro";
 import TOC from "../components/widget/TOC.astro";
 import { siteConfig } from "../config";
 import {
@@ -53,10 +53,26 @@ const mainPanelTop = siteConfig.banner.enable
 
 <!-- Banner -->
 {siteConfig.banner.enable && <div id="banner-wrapper" class={`absolute z-10 w-full transition duration-700 overflow-hidden`} style={`top: -${BANNER_HEIGHT_EXTEND}vh`}>
-    <ImageWrapper id="banner" alt="Banner image of the blog" class:list={["object-cover h-full transition duration-700 opacity-0 scale-105"]}
-                  src={siteConfig.banner.src} position={siteConfig.banner.position}
+    <div
+        id="banner"
+        class="relative h-full w-full overflow-hidden transition duration-700 opacity-0 scale-105"
     >
-    </ImageWrapper>
+        <video
+            id="banner-video"
+            class="absolute inset-0 h-full w-full object-cover"
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="metadata"
+            poster="/images/sunset-clouds-poster.jpg"
+            aria-hidden="true"
+        >
+            <source src="/videos/sunset-clouds-bg.mp4" type="video/mp4" />
+        </video>
+        <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/5 via-black/10 to-black/25"></div>
+    </div>
+    <HomeTypewriter />
 </div>}
 
 <!-- Main content -->

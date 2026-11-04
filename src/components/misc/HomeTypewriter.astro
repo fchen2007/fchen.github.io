@@ -1,0 +1,150 @@
+---
+---
+
+<div
+	class="home-typewriter"
+	data-home-typewriter
+	aria-label="Welcome to my blog"
+>
+	<span
+		class="home-typewriter__text"
+		data-text="Welcome to my blog"
+		aria-hidden="true"></span>
+	<span class="home-typewriter__caret" aria-hidden="true">_</span>
+</div>
+
+<style>
+	.home-typewriter {
+		position: absolute;
+		inset: 0;
+		z-index: 30;
+		display: none;
+		align-items: center;
+		justify-content: center;
+		padding: 6rem 1.5rem 3rem;
+		pointer-events: none;
+		text-align: center;
+	}
+
+	.home-typewriter.is-visible {
+		display: flex;
+	}
+
+	.home-typewriter__text,
+	.home-typewriter__caret {
+		color: rgba(255, 255, 255, 0.96);
+		font-size: clamp(1.45rem, 2.6vw, 2.4rem);
+		font-weight: 750;
+		letter-spacing: 0.045em;
+		line-height: 1.6;
+		text-shadow:
+			0 3px 8px rgba(19, 22, 40, 0.82),
+			0 10px 36px rgba(12, 17, 38, 0.58);
+	}
+
+	.home-typewriter__text {
+		white-space: pre-wrap;
+	}
+
+	.home-typewriter__caret {
+		margin-left: 0.08em;
+		font-family: "JetBrains Mono", monospace;
+		font-weight: 500;
+		animation: home-typewriter-caret 760ms step-end infinite;
+	}
+
+	@keyframes home-typewriter-caret {
+		0%,
+		46% {
+			opacity: 1;
+		}
+		47%,
+		100% {
+			opacity: 0;
+		}
+	}
+
+	@media (max-width: 640px) {
+		.home-typewriter {
+			padding-top: 5.5rem;
+			padding-bottom: 2rem;
+		}
+
+		.home-typewriter__text,
+		.home-typewriter__caret {
+			font-size: clamp(1.25rem, 6vw, 1.65rem);
+			letter-spacing: 0.025em;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.home-typewriter__caret {
+			animation: none;
+		}
+	}
+</style>
+
+<script>
+	const root = document.querySelector<HTMLElement>("[data-home-typewriter]");
+	const text = root?.querySelector<HTMLElement>(".home-typewriter__text");
+	const fullText = text?.dataset.text ?? "";
+	const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+	let timer: number | undefined;
+
+	function reset() {
+		if (timer !== undefined) window.clearTimeout(timer);
+		timer = undefined;
+		if (text) text.textContent = "";
+	}
+
+	function type() {
+		if (!root || !text) return;
+		reset();
+
+		if (reducedMotion) {
+			text.textContent = fullText;
+			return;
+		}
+
+		const characters = Array.from(fullText);
+		let index = 0;
+
+		function next() {
+			text.textContent += characters[index] ?? "";
+			index += 1;
+
+			if (index < characters.length) {
+				timer = window.setTimeout(next, 72 + Math.random() * 68);
+			}
+		}
+
+		timer = window.setTimeout(next, 420);
+	}
+
+	function update() {
+		if (!root) return;
+		const isHome = document.body.classList.contains("lg:is-home");
+		root.classList.toggle("is-visible", isHome);
+
+		if (isHome) {
+			if (!root.dataset.started) {
+				root.dataset.started = "true";
+				type();
+			}
+		} else {
+			delete root.dataset.started;
+			reset();
+		}
+	}
+
+	function setupSwup() {
+		const swup = (window as any).swup;
+		if (swup?.hooks) swup.hooks.on("page:view", update);
+		update();
+	}
+
+	update();
+
+	if ((window as any).swup?.hooks) setupSwup();
+	else document.addEventListener("swup:enable", setupSwup, { once: true });
+</script>
