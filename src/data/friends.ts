@@ -32,7 +32,7 @@ export const friendLinks: FriendLink[] = [
 	      url: "https://yinniao23.github.io/Lynn_blog/",
 	      description: "25级高手",
 	     avatar: "https://yinniao23.github.io/Lynn_blog/images/avatar.jpg", 
-       }，
+       },
 
        {
 	      name: "HinanawiTeriko",
