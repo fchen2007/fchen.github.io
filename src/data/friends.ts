@@ -12,11 +12,36 @@ export const friendLinks: FriendLink[] = [
 		description: "Web大蛇补药杀窝",
 		avatar: "https://moriya.bagfrog.blog/_astro/datou.CKNcbI12_ZUcNOb.webp",
 	},
-	// 按下面的格式添加更多友链：
-	// {
-	//   name: "朋友的名字",
-	//   url: "https://example.com",
-	//   description: "一句话介绍",
-	//   avatar: "https://example.com/avatar.png",
-	// },
+	
+	{
+	      name: "decimo",
+	      url: "https://decimo.top/",
+	      description: "Web入门导师，强强的师傅",
+	     avatar: "https://decimo.top/images/my-avatar.jpg",
+        },
+     
+       {
+	      name: "btop251",
+	      url: "https://blog.btop251.top/",
+	      description: "Web大神",
+	     avatar: "https://blog.btop251.top/img/avatar.jpg",
+       },
+
+       {
+	      name: "殷袅",
+	      url: "https://yinniao23.github.io/Lynn_blog/",
+	      description: "25级高手",
+	     avatar: "https://yinniao23.github.io/Lynn_blog/images/avatar.jpg", 
+
+       {
+	      name: "HinanawiTeriko",
+	      url: "https://hinanawiteriko.github.io/",
+	      description: "天子",
+	     avatar: "https://hinanawiteriko.github.io/avatar/avatar.jpg", 
+       },
+
+
+
+
+
 ];
