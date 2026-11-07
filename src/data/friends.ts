@@ -40,9 +40,16 @@ export const friendLinks: FriendLink[] = [
 	      description: "天子",
 	     avatar: "https://hinanawiteriko.github.io/avatar/avatar.jpg", 
        },
+       
+       {
+	      name: "quequ",
+	      url: "https://an2erika.github.io/",
+	      description: "crypto小小鸟",
+	     avatar: "https://an2erika.github.io/img/tx.png", 
+       },
 
 
-
+   
 
 
 ];
