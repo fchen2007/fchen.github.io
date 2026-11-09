@@ -52,7 +52,7 @@ export const friendLinks: FriendLink[] = [
 	      name: "breeze",
 	      url: "https://forest-breeze.github.io/",
 	      description: "web player",
-	     avatar: "/images/friends/breeze.jpg", 
+	      avatar: "/images/friends/breeze.jpg", 
        },
    
 
