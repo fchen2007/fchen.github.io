@@ -54,6 +54,13 @@ export const friendLinks: FriendLink[] = [
 	      description: "web player",
 	      avatar: "/images/friends/breeze.jpg", 
        },
+
+       {
+	      name: "dxfake",
+	      url: "https://dxfaker.top/",
+	      description: "pwn大肘子",
+	      avatar: "https://dxfaker.top/_astro/avatar.Bd1YvTWL_Z2bgzTB.webp", 
+       },
    
 
 
